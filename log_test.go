@@ -2,6 +2,7 @@ package log
 
 import (
 	"bytes"
+	"os"
 	"testing"
 	"time"
 )
@@ -10,16 +11,15 @@ func TestDebugLog(t *testing.T) {
 	w := bytes.NewBuffer([]byte{})
 
 	level := "DEBUG"
-	logdebug := NewDebugLog(w, level)
-	refnumb := "esvFEweb2017"
+	logdebug := NewDebugLog(w, level, "EVOUCHER")
 	subrnumb := "66987654321"
-	service := "esvFEweb"
-	proc := "PROC"
-	logdebug.SetInitlogDetail(service, proc)
-	logdebug.SetRecordDetail(refnumb, subrnumb)
+	sessionID := "SessionID"
+	trnsID := "trnsID"
+	logdebug.SetInitlogDetail(sessionID, trnsID)
+	logdebug.SetRecordDetail(subrnumb)
 	logdebug.Println("msg")
 
-	expected := "|DEBUG|esvFEweb2017|66987654321|esvFEweb|PROC|msg\n"
+	expected := "|DEBUG|EVOUCHER|SessionID|trnsID|66987654321|msg\n"
 
 	if string(w.String()[19:]) != expected {
 		t.Errorf("Expected %#v \n        but got  %#v", expected, string(w.String()[19:]))
@@ -30,16 +30,15 @@ func TestInfoLog(t *testing.T) {
 
 	w := bytes.NewBuffer([]byte{})
 	level := "INFO"
-	loginfo := NewDebugLog(w, level)
-	refnumb := "esvFEweb2017"
+	loginfo := NewDebugLog(w, level, "EVOUCHER")
 	subrnumb := "66987654321"
-	service := "esvFEweb"
-	proc := "PROC"
-	loginfo.SetInitlogDetail(service, proc)
-	loginfo.SetRecordDetail(refnumb, subrnumb)
+	sessionID := "SessionID"
+	trnsID := "trnsID"
+	loginfo.SetInitlogDetail(sessionID, trnsID)
+	loginfo.SetRecordDetail(subrnumb)
 	loginfo.Println("msg")
 
-	expected := "|INFO|esvFEweb2017|66987654321|esvFEweb|PROC|msg\n"
+	expected := "|INFO|EVOUCHER|SessionID|trnsID|66987654321|msg\n"
 
 	if string(w.String()[19:]) != expected {
 		t.Errorf("Expected %#v \n        but got  %#v", expected, w.String())
@@ -50,16 +49,15 @@ func TestErrorLog(t *testing.T) {
 
 	w := bytes.NewBuffer([]byte{})
 	level := "ERROR"
-	logerror := NewDebugLog(w, level)
-	refnumb := "esvFEweb2017"
+	logerror := NewDebugLog(w, level, "EVOUCHER")
 	subrnumb := "66987654321"
-	service := "esvFEweb"
-	proc := "PROC"
-	logerror.SetInitlogDetail(service, proc)
-	logerror.SetRecordDetail(refnumb, subrnumb)
+	sessionID := "SessionID"
+	trnsID := "trnsID"
+	logerror.SetInitlogDetail(sessionID, trnsID)
+	logerror.SetRecordDetail(subrnumb)
 	logerror.Println("msg")
 
-	expected := "|ERROR|esvFEweb2017|66987654321|esvFEweb|PROC|msg\n"
+	expected := "|ERROR|EVOUCHER|SessionID|trnsID|66987654321|msg\n"
 
 	if string(w.String()[19:]) != expected {
 		t.Errorf("Expected %#v \n        but got  %#v", expected, w.String())
@@ -71,17 +69,16 @@ func TestPrintf(t *testing.T) {
 
 	w := bytes.NewBuffer([]byte{})
 	level := "ERROR"
-	logerror := NewDebugLog(w, level)
-	refnumb := "esvFEweb2017"
+	logerror := NewDebugLog(w, level, "EVOUCHER")
 	subrnumb := "66987654321"
-	service := "esvFEweb"
-	proc := "PROC"
-	logerror.SetInitlogDetail(service, proc)
-	logerror.SetRecordDetail(refnumb, subrnumb)
+	sessionID := "SessionID"
+	trnsID := "trnsID"
+	logerror.SetInitlogDetail(sessionID, trnsID)
+	logerror.SetRecordDetail(subrnumb)
 	test := 1
 	logerror.Printf("msg: %#v", test)
 
-	expected := "|ERROR|esvFEweb2017|66987654321|esvFEweb|PROC|msg: 1\n"
+	expected := "|ERROR|EVOUCHER|SessionID|trnsID|66987654321|msg: 1\n"
 
 	if string(w.String()[19:]) != expected {
 		t.Errorf("Expected %#v \n        but got  %#v", expected, w.String()[19:])
@@ -93,13 +90,49 @@ func TestPrintTrns(t *testing.T) {
 	w := bytes.NewBuffer([]byte{})
 
 	logtrns := NewTrnsLog(w)
+	sourceSystemID := "EVOUCHER"
+	sessionID := "12345"
+	trnsID := "1233244"
 	subrnumb := "66987654321"
-	service := "esvFEweb"
-	status := "S"
-	errcode := "T1000"
-	logtrns.PrintTrns(service, subrnumb, status, errcode)
+	requestIP := "2313121"
+	serviceName := "Test"
+	funcName := "TestFunc"
+	statusType := "S"
+	errCode := "0"
+	errMsg := "message"
+	endpointErrCode := "0"
+	responseTime := "234"
+	logtrns.PrintTrns(sourceSystemID, sessionID, trnsID, subrnumb, requestIP, serviceName, funcName, statusType, errCode, errMsg, endpointErrCode, responseTime)
+	hostname, _ := os.Hostname()
+	expected := "|" + hostname + "|EVOUCHER|12345|1233244|66987654321|2313121|Test|TestFunc|S|0|message|0|234\n"
 
-	expected := "|esvFEweb|66987654321|S|T1000\n"
+	if string(w.String()[19:]) != expected {
+		t.Errorf("Expected %#v \n        but got  %#v", expected, w.String()[19:])
+		t.Errorf("Expected %v but got %v", len(expected), len(w.String()[19:]))
+	}
+}
+
+func TestPrintEndpointTrns(t *testing.T) {
+
+	w := bytes.NewBuffer([]byte{})
+
+	logtrns := NewEndpointTrnsLog(w)
+	sourceSystemID := "EVOUCHER"
+	sessionID := "12345"
+	trnsID := "1233244"
+	subrnumb := "66987654321"
+	requestIP := "2313121"
+	serviceName := "Test"
+	funcName := "TestFunc"
+	serviceType := "REWARD"
+	endpointServiceName := "enquiryPrivilege"
+	endpointStatusType := ""
+	endpointStatusCode := ""
+	endpointErrCode := "0"
+	responseTime := "234"
+	logtrns.PrintEndpointTrns(sourceSystemID, sessionID, trnsID, subrnumb, requestIP, serviceName, funcName, serviceType, endpointServiceName, endpointStatusType, endpointStatusCode, endpointErrCode, responseTime)
+	hostname, _ := os.Hostname()
+	expected := "|" + hostname + "|EVOUCHER|12345|1233244|66987654321|2313121|Test|TestFunc|REWARD|enquiryPrivilege|||0|234\n"
 
 	if string(w.String()[19:]) != expected {
 		t.Errorf("Expected %#v \n        but got  %#v", expected, w.String()[19:])

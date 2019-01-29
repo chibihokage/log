@@ -15,12 +15,18 @@ type LogLevel struct {
 	Debuglog, Infolog, Errorlog Log
 }
 
-type logPattern struct {
-	Date, Level, Refnum, Subrnumb, Service, Proc, Msg string
+type logDebugPattern struct {
+	Date, Level, SourceSystemID, SessionID, TrnsID, Subrnumb, Msg string
 }
+
+type logTrnsEndpointPattern struct {
+	Date, HostName, SourceSystemID, SessionID, TrnsID, Subrnumb, RequestIP, ServiceName, FuncName, ServiceType, EndpointServiceName, EndpointStatusType, EndpointStatusCode, EndpointErrCode, ResponseTime string
+}
+
 type logTrnsPattern struct {
-	Date, Service, Subrnumb, Status, Errcode string
+	Date, HostName, SourceSystemID, SessionID, TrnsID, Subrnumb, RequestIP, ServiceName, FuncName, StatusType, ErrCode, ErrMsg, EndpointErrCode, ResponseTime string
 }
+
 type Log struct {
 	Debug       *log.Logger
 	patternInit string
@@ -40,17 +46,17 @@ func newTimeFmt(t time.Time, f string) mytime {
 	return mytime{t, f}
 }
 
-func NewDebugLog(w io.Writer, level string) Log {
-	format := `{{.Date}}|{{.Level}}|{{.Refnum}}|{{.Subrnumb}}|{{.Service}}|{{.Proc}}|{{.Msg}}`
+func NewDebugLog(w io.Writer, level, srcSysName string) Log {
+	format := `{{.Date}}|{{.Level}}|{{.SourceSystemID}}|{{.SessionID}}|{{.TrnsID}}|{{.Subrnumb}}|{{.Msg}}`
 
-	logDebug := logPattern{
-		Date:     "$date",
-		Level:    level,
-		Refnum:   "$ref",
-		Subrnumb: "$sub",
-		Service:  "$ser",
-		Proc:     "$proc",
-		Msg:      "%s",
+	logDebug := logDebugPattern{
+		Date:           "$date",
+		Level:          level,
+		SourceSystemID: srcSysName,
+		SessionID:      "$sessionID",
+		TrnsID:         "$trnsID",
+		Subrnumb:       "$sub",
+		Msg:            "%s",
 	}
 
 	bufDebug := bytes.NewBuffer([]byte{})
@@ -67,36 +73,84 @@ func NewDebugLog(w io.Writer, level string) Log {
 	}
 }
 func NewTrnsLog(w io.Writer) Log {
-	format := `{{.Date}}|{{.Service}}|{{.Subrnumb}}|{{.Status}}|{{.Errcode}}`
+	format := `{{.Date}}|{{.HostName}}|{{.SourceSystemID}}|{{.SessionID}}|{{.TrnsID}}|{{.Subrnumb}}|{{.RequestIP}}|{{.ServiceName}}|{{.FuncName}}|{{.StatusType}}|{{.ErrCode}}|{{.ErrMsg}}|{{.EndpointErrCode}}|{{.ResponseTime}}`
 	return Log{
 		Debug:       log.New(w, "", 0),
 		patternTrns: format,
 	}
 }
 
-func (log *Log) SetRecordDetail(refnumb, subrnumb string) {
+func NewEndpointTrnsLog(w io.Writer) Log {
+	format := `{{.Date}}|{{.HostName}}|{{.SourceSystemID}}|{{.SessionID}}|{{.TrnsID}}|{{.Subrnumb}}|{{.RequestIP}}|{{.ServiceName}}|{{.FuncName}}|{{.ServiceType}}|{{.EndpointServiceName}}|{{.EndpointStatusType}}|{{.EndpointStatusCode}}|{{.EndpointErrCode}}|{{.ResponseTime}}`
+	return Log{
+		Debug:       log.New(w, "", 0),
+		patternTrns: format,
+	}
+}
+
+func (log *Log) SetRecordDetail(subrnumb string) {
 	r := strings.NewReplacer(
-		"$ref", refnumb,
 		"$sub", subrnumb,
 	)
 	log.patternRec = r.Replace(log.patternInit)
 }
-func (log *Log) SetInitlogDetail(service, proc string) {
+func (log *Log) SetInitlogDetail(sessionID, trnsID string) {
 	r := strings.NewReplacer(
-		"$ser", service,
-		"$proc", proc,
+		"$sessionID", sessionID,
+		"$trnsID", trnsID,
 	)
 	log.patternInit = r.Replace(log.patternInit)
 }
-func (log Log) PrintTrns(service, subrnumb, status, errcode string) {
+func (log Log) PrintTrns(sourceSystemID, sessionID, trnsID, subrnumb, requestIP, serviceName, funcName, statusType, errCode, errMsg, endpointErrCode, responseTime string) {
+	hostname, _ := os.Hostname()
 	bangkok, err := time.LoadLocation("Asia/Bangkok")
 	dateNow := newTimeFmt(time.Now().In(bangkok), "2006-01-02T15:04:05")
 	logTrns := logTrnsPattern{
-		Date:     dateNow.String(),
-		Service:  service,
-		Subrnumb: subrnumb,
-		Status:   status,
-		Errcode:  errcode,
+		Date:            dateNow.String(),
+		HostName:        hostname,
+		SourceSystemID:  sourceSystemID,
+		SessionID:       sessionID,
+		TrnsID:          trnsID,
+		Subrnumb:        subrnumb,
+		RequestIP:       requestIP,
+		ServiceName:     serviceName,
+		FuncName:        funcName,
+		StatusType:      statusType,
+		ErrCode:         errCode,
+		ErrMsg:          errMsg,
+		EndpointErrCode: endpointErrCode,
+		ResponseTime:    responseTime,
+	}
+
+	bufTrns := bytes.NewBuffer([]byte{})
+	t := template.Must(template.New(log.patternTrns).Parse(log.patternTrns))
+	err = t.Execute(bufTrns, logTrns)
+	if err != nil {
+		log.Printf("executing template: %v", err)
+	}
+	log.Debug.Println(bufTrns.String())
+}
+
+func (log Log) PrintEndpointTrns(sourceSystemID, sessionID, trnsID, subrnumb, requestIP, serviceName, funcName, serviceType, endpointServiceName, endpointStatusType, endpointStatusCode, endpointErrCode, responseTime string) {
+	hostname, _ := os.Hostname()
+	bangkok, err := time.LoadLocation("Asia/Bangkok")
+	dateNow := newTimeFmt(time.Now().In(bangkok), "2006-01-02T15:04:05")
+	logTrns := logTrnsEndpointPattern{
+		Date:                dateNow.String(),
+		HostName:            hostname,
+		SourceSystemID:      sourceSystemID,
+		SessionID:           sessionID,
+		TrnsID:              trnsID,
+		Subrnumb:            subrnumb,
+		RequestIP:           requestIP,
+		ServiceName:         serviceName,
+		FuncName:            funcName,
+		ServiceType:         serviceType,
+		EndpointServiceName: endpointServiceName,
+		EndpointStatusType:  endpointStatusType,
+		EndpointStatusCode:  endpointStatusCode,
+		EndpointErrCode:     endpointErrCode,
+		ResponseTime:        responseTime,
 	}
 
 	bufTrns := bytes.NewBuffer([]byte{})
@@ -181,19 +235,27 @@ func CreateLogFile(filename string) io.Writer {
 
 	return logFile
 }
-func InitDebuglog(filename, service, proc string) LogLevel {
+
+func InitDebuglog(filename, sessionID, trnsID, srcSysName string) LogLevel {
 	var logs LogLevel
 	fileDebug := CreateLogFile(filename)
-	logs.Debuglog = NewDebugLog(fileDebug, "DEBUG")
-	logs.Infolog = NewDebugLog(fileDebug, "INFO ")
-	logs.Errorlog = NewDebugLog(fileDebug, "ERROR")
-	logs.Debuglog.SetInitlogDetail(service, proc)
-	logs.Infolog.SetInitlogDetail(service, proc)
-	logs.Errorlog.SetInitlogDetail(service, proc)
+	logs.Debuglog = NewDebugLog(fileDebug, "DEBUG", srcSysName)
+	logs.Infolog = NewDebugLog(fileDebug, "INFO ", srcSysName)
+	logs.Errorlog = NewDebugLog(fileDebug, "ERROR", srcSysName)
+	logs.Debuglog.SetInitlogDetail(sessionID, trnsID)
+	logs.Infolog.SetInitlogDetail(sessionID, trnsID)
+	logs.Errorlog.SetInitlogDetail(sessionID, trnsID)
 	return logs
 }
+
 func InitTrnslog(filename string) Log {
 	fileTrns := CreateLogFile(filename)
 	trnslog := NewTrnsLog(fileTrns)
+	return trnslog
+}
+
+func InitEndpointTrnslog(filename string) Log {
+	fileTrns := CreateLogFile(filename)
+	trnslog := NewEndpointTrnsLog(fileTrns)
 	return trnslog
 }
