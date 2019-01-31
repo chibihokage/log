@@ -88,8 +88,6 @@ func TestPrintf(t *testing.T) {
 func TestPrintTrns(t *testing.T) {
 
 	w := bytes.NewBuffer([]byte{})
-
-	logtrns := NewTrnsLog(w)
 	sourceSystemID := "EVOUCHER"
 	sessionID := "12345"
 	trnsID := "1233244"
@@ -97,15 +95,15 @@ func TestPrintTrns(t *testing.T) {
 	requestIP := "2313121"
 	serviceName := "Test"
 	funcName := "TestFunc"
+	logtrns := NewTrnsLog(w, sourceSystemID, sessionID, trnsID, subrnumb, requestIP, serviceName, funcName)
 	statusType := "S"
 	errCode := "0"
 	errMsg := "message"
 	endpointErrCode := "0"
 	responseTime := "234"
-	logtrns.PrintTrns(sourceSystemID, sessionID, trnsID, subrnumb, requestIP, serviceName, funcName, statusType, errCode, errMsg, endpointErrCode, responseTime)
+	logtrns.PrintTrns(statusType, errCode, errMsg, endpointErrCode, responseTime)
 	hostname, _ := os.Hostname()
 	expected := "|" + hostname + "|EVOUCHER|12345|1233244|66987654321|2313121|Test|TestFunc|S|0|message|0|234\n"
-
 	if string(w.String()[19:]) != expected {
 		t.Errorf("Expected %#v \n        but got  %#v", expected, w.String()[19:])
 		t.Errorf("Expected %v but got %v", len(expected), len(w.String()[19:]))

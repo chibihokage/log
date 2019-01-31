@@ -72,11 +72,37 @@ func NewDebugLog(w io.Writer, level, srcSysName string) Log {
 		patternInit: bufDebug.String(),
 	}
 }
-func NewTrnsLog(w io.Writer) Log {
+func NewTrnsLog(w io.Writer, sourceSystemID, sessionID, trnsID, subrnumb, requestIP, serviceName, funcName string) Log {
 	format := `{{.Date}}|{{.HostName}}|{{.SourceSystemID}}|{{.SessionID}}|{{.TrnsID}}|{{.Subrnumb}}|{{.RequestIP}}|{{.ServiceName}}|{{.FuncName}}|{{.StatusType}}|{{.ErrCode}}|{{.ErrMsg}}|{{.EndpointErrCode}}|{{.ResponseTime}}`
+	hostname, _ := os.Hostname()
+	logTrns := logTrnsPattern{
+		Date:            "$date",
+		HostName:        hostname,
+		SourceSystemID:  sourceSystemID,
+		SessionID:       sessionID,
+		TrnsID:          trnsID,
+		Subrnumb:        subrnumb,
+		RequestIP:       requestIP,
+		ServiceName:     serviceName,
+		FuncName:        funcName,
+		StatusType:      "$statusType",
+		ErrCode:         "$errCode",
+		ErrMsg:          "$errMsg",
+		EndpointErrCode: "$endpointErrCode",
+		ResponseTime:    "$responseTime",
+	}
+
+	bufTrns := bytes.NewBuffer([]byte{})
+	t := template.Must(template.New(format).Parse(format))
+	err := t.Execute(bufTrns, logTrns)
+
+	if err != nil {
+		log.Println("executing template:", err)
+	}
+
 	return Log{
 		Debug:       log.New(w, "", 0),
-		patternTrns: format,
+		patternTrns: bufTrns.String(),
 	}
 }
 
@@ -101,34 +127,25 @@ func (log *Log) SetInitlogDetail(sessionID, trnsID string) {
 	)
 	log.patternInit = r.Replace(log.patternInit)
 }
-func (log Log) PrintTrns(sourceSystemID, sessionID, trnsID, subrnumb, requestIP, serviceName, funcName, statusType, errCode, errMsg, endpointErrCode, responseTime string) {
-	hostname, _ := os.Hostname()
+
+func (log Log) PrintTrns(statusType, errCode, errMsg, endpointErrCode, responseTime string) {
+	var patternTrns string
 	bangkok, err := time.LoadLocation("Asia/Bangkok")
 	dateNow := newTimeFmt(time.Now().In(bangkok), "2006-01-02T15:04:05")
-	logTrns := logTrnsPattern{
-		Date:            dateNow.String(),
-		HostName:        hostname,
-		SourceSystemID:  sourceSystemID,
-		SessionID:       sessionID,
-		TrnsID:          trnsID,
-		Subrnumb:        subrnumb,
-		RequestIP:       requestIP,
-		ServiceName:     serviceName,
-		FuncName:        funcName,
-		StatusType:      statusType,
-		ErrCode:         errCode,
-		ErrMsg:          errMsg,
-		EndpointErrCode: endpointErrCode,
-		ResponseTime:    responseTime,
+	if err != nil {
+		log.Fatalf("Failed to LoadLocation %v", err)
 	}
 
-	bufTrns := bytes.NewBuffer([]byte{})
-	t := template.Must(template.New(log.patternTrns).Parse(log.patternTrns))
-	err = t.Execute(bufTrns, logTrns)
-	if err != nil {
-		log.Printf("executing template: %v", err)
-	}
-	log.Debug.Println(bufTrns.String())
+	r := strings.NewReplacer(
+		"$date", dateNow.String(),
+		"$statusType", statusType,
+		"$errCode", errCode,
+		"$errMsg", errMsg,
+		"$endpointErrCode", endpointErrCode,
+		"$responseTime", responseTime,
+	)
+	patternTrns = r.Replace(log.patternTrns)
+	log.Debug.Println(fmt.Sprintf(patternTrns))
 }
 
 func (log Log) PrintEndpointTrns(sourceSystemID, sessionID, trnsID, subrnumb, requestIP, serviceName, funcName, serviceType, endpointServiceName, endpointStatusType, endpointStatusCode, endpointErrCode, responseTime string) {
@@ -248,9 +265,9 @@ func InitDebuglog(filename, sessionID, trnsID, srcSysName string) LogLevel {
 	return logs
 }
 
-func InitTrnslog(filename string) Log {
+func InitTrnslog(filename, sourceSystemID, sessionID, trnsID, subrnumb, requestIP, serviceName, funcName string) Log {
 	fileTrns := CreateLogFile(filename)
-	trnslog := NewTrnsLog(fileTrns)
+	trnslog := NewTrnsLog(fileTrns, sourceSystemID, sessionID, trnsID, subrnumb, requestIP, serviceName, funcName)
 	return trnslog
 }
 
