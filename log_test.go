@@ -95,13 +95,13 @@ func TestPrintTrns(t *testing.T) {
 	requestIP := "2313121"
 	serviceName := "Test"
 	funcName := "TestFunc"
-	logtrns := NewTrnsLog(w, sourceSystemID, sessionID, trnsID, subrnumb, requestIP, serviceName, funcName)
+	logtrns := NewTrnsLog(w, sourceSystemID, sessionID, trnsID, requestIP, serviceName, funcName)
 	statusType := "S"
 	errCode := "0"
 	errMsg := "message"
 	endpointErrCode := "0"
 	responseTime := "234"
-	logtrns.PrintTrns(statusType, errCode, errMsg, endpointErrCode, responseTime)
+	logtrns.PrintTrns(subrnumb, statusType, errCode, errMsg, endpointErrCode, responseTime)
 	hostname, _ := os.Hostname()
 	expected := "|" + hostname + "|EVOUCHER|12345|1233244|66987654321|2313121|Test|TestFunc|S|0|message|0|234\n"
 	if string(w.String()[19:]) != expected {

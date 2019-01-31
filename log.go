@@ -72,7 +72,7 @@ func NewDebugLog(w io.Writer, level, srcSysName string) Log {
 		patternInit: bufDebug.String(),
 	}
 }
-func NewTrnsLog(w io.Writer, sourceSystemID, sessionID, trnsID, subrnumb, requestIP, serviceName, funcName string) Log {
+func NewTrnsLog(w io.Writer, sourceSystemID, sessionID, trnsID, requestIP, serviceName, funcName string) Log {
 	format := `{{.Date}}|{{.HostName}}|{{.SourceSystemID}}|{{.SessionID}}|{{.TrnsID}}|{{.Subrnumb}}|{{.RequestIP}}|{{.ServiceName}}|{{.FuncName}}|{{.StatusType}}|{{.ErrCode}}|{{.ErrMsg}}|{{.EndpointErrCode}}|{{.ResponseTime}}`
 	hostname, _ := os.Hostname()
 	logTrns := logTrnsPattern{
@@ -81,7 +81,7 @@ func NewTrnsLog(w io.Writer, sourceSystemID, sessionID, trnsID, subrnumb, reques
 		SourceSystemID:  sourceSystemID,
 		SessionID:       sessionID,
 		TrnsID:          trnsID,
-		Subrnumb:        subrnumb,
+		Subrnumb:        "$subrnumb",
 		RequestIP:       requestIP,
 		ServiceName:     serviceName,
 		FuncName:        funcName,
@@ -128,7 +128,7 @@ func (log *Log) SetInitlogDetail(sessionID, trnsID string) {
 	log.patternInit = r.Replace(log.patternInit)
 }
 
-func (log Log) PrintTrns(statusType, errCode, errMsg, endpointErrCode, responseTime string) {
+func (log Log) PrintTrns(subrnumb, statusType, errCode, errMsg, endpointErrCode, responseTime string) {
 	var patternTrns string
 	bangkok, err := time.LoadLocation("Asia/Bangkok")
 	dateNow := newTimeFmt(time.Now().In(bangkok), "2006-01-02T15:04:05")
@@ -138,6 +138,7 @@ func (log Log) PrintTrns(statusType, errCode, errMsg, endpointErrCode, responseT
 
 	r := strings.NewReplacer(
 		"$date", dateNow.String(),
+		"$subrnumb", subrnumb,
 		"$statusType", statusType,
 		"$errCode", errCode,
 		"$errMsg", errMsg,
@@ -267,7 +268,7 @@ func InitDebuglog(filename, sessionID, trnsID, srcSysName string) LogLevel {
 
 func InitTrnslog(filename, sourceSystemID, sessionID, trnsID, subrnumb, requestIP, serviceName, funcName string) Log {
 	fileTrns := CreateLogFile(filename + "_Transaction.log")
-	trnslog := NewTrnsLog(fileTrns, sourceSystemID, sessionID, trnsID, subrnumb, requestIP, serviceName, funcName)
+	trnslog := NewTrnsLog(fileTrns, sourceSystemID, sessionID, trnsID, requestIP, serviceName, funcName)
 	return trnslog
 }
 
