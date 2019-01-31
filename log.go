@@ -255,7 +255,7 @@ func CreateLogFile(filename string) io.Writer {
 
 func InitDebuglog(filename, sessionID, trnsID, srcSysName string) LogLevel {
 	var logs LogLevel
-	fileDebug := CreateLogFile(filename)
+	fileDebug := CreateLogFile(filename + "_Debug.log")
 	logs.Debuglog = NewDebugLog(fileDebug, "DEBUG", srcSysName)
 	logs.Infolog = NewDebugLog(fileDebug, "INFO ", srcSysName)
 	logs.Errorlog = NewDebugLog(fileDebug, "ERROR", srcSysName)
@@ -266,13 +266,13 @@ func InitDebuglog(filename, sessionID, trnsID, srcSysName string) LogLevel {
 }
 
 func InitTrnslog(filename, sourceSystemID, sessionID, trnsID, subrnumb, requestIP, serviceName, funcName string) Log {
-	fileTrns := CreateLogFile(filename)
+	fileTrns := CreateLogFile(filename + "_Transaction.log")
 	trnslog := NewTrnsLog(fileTrns, sourceSystemID, sessionID, trnsID, subrnumb, requestIP, serviceName, funcName)
 	return trnslog
 }
 
 func InitEndpointTrnslog(filename string) Log {
-	fileTrns := CreateLogFile(filename)
+	fileTrns := CreateLogFile(filename + "_Endpoint.log")
 	trnslog := NewEndpointTrnsLog(fileTrns)
 	return trnslog
 }
