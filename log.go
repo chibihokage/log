@@ -266,7 +266,7 @@ func InitDebuglog(filename, sessionID, trnsID, srcSysName string) LogLevel {
 	return logs
 }
 
-func InitTrnslog(filename, sourceSystemID, sessionID, trnsID, subrnumb, requestIP, serviceName, funcName string) Log {
+func InitTrnslog(filename, sourceSystemID, sessionID, trnsID, requestIP, serviceName, funcName string) Log {
 	fileTrns := CreateLogFile(filename + "_Transaction.log")
 	trnslog := NewTrnsLog(fileTrns, sourceSystemID, sessionID, trnsID, requestIP, serviceName, funcName)
 	return trnslog
