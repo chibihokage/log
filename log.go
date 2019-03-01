@@ -296,3 +296,14 @@ func InitEndpointTrnslog(filename, sourceSystemID, sessionID, trnsID, requestIP,
 	trnslog := NewEndpointTrnsLog(fileTrns, sourceSystemID, sessionID, trnsID, requestIP, serviceName, funcName)
 	return trnslog
 }
+
+func MockInitDebuglog(w io.Writer, sessionID, trnsID, srcSysName string) LogLevel {
+	var logs LogLevel
+	logs.Debuglog = NewDebugLog(w, "DEBUG", srcSysName)
+	logs.Infolog = NewDebugLog(w, "INFO ", srcSysName)
+	logs.Errorlog = NewDebugLog(w, "ERROR", srcSysName)
+	logs.Debuglog.SetInitlogDetail(sessionID, trnsID)
+	logs.Infolog.SetInitlogDetail(sessionID, trnsID)
+	logs.Errorlog.SetInitlogDetail(sessionID, trnsID)
+	return logs
+}
