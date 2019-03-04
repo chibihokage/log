@@ -307,3 +307,13 @@ func MockInitDebuglog(w io.Writer, sessionID, trnsID, srcSysName string) LogLeve
 	logs.Errorlog.SetInitlogDetail(sessionID, trnsID)
 	return logs
 }
+
+func MockInitTrnsLog(w io.Writer, sourceSystemID, sessionID, trnsID, requestIP, serviceName, funcName string) Log {
+	trnslog := NewTrnsLog(w, sourceSystemID, sessionID, trnsID, requestIP, serviceName, funcName)
+	return trnslog
+}
+
+func MockInitEndpointTrnsLog(w io.Writer, sourceSystemID, sessionID, trnsID, requestIP, serviceName, funcName string) Log {
+	trnslog := NewEndpointTrnsLog(w, sourceSystemID, sessionID, trnsID, requestIP, serviceName, funcName)
+	return trnslog
+}
