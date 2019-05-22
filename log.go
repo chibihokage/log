@@ -20,7 +20,7 @@ type logDebugPattern struct {
 }
 
 type logTrnsEndpointPattern struct {
-	Date, HostName, SourceSystemID, SessionID, TrnsID, Subrnumb, RequestIP, ServiceName, FuncName, ServiceType, EndpointServiceName, EndpointStatusType, EndpointStatusCode, EndpointErrCode, ResponseTime string
+	Date, HostName, SourceSystemID, SessionID, TrnsID, SeqID, Subrnumb, RequestIP, ServiceName, FuncName, ServiceType, EndpointServiceName, EndpointStatusType, EndpointStatusCode, EndpointErrCode, ResponseTime string
 }
 
 type logTrnsPattern struct {
@@ -107,7 +107,7 @@ func NewTrnsLog(w io.Writer, sourceSystemID, sessionID, trnsID, requestIP, servi
 }
 
 func NewEndpointTrnsLog(w io.Writer, sourceSystemID, sessionID, trnsID, requestIP, serviceName, funcName string) Log {
-	format := `{{.Date}}|{{.HostName}}|{{.SourceSystemID}}|{{.SessionID}}|{{.TrnsID}}|{{.Subrnumb}}|{{.RequestIP}}|{{.ServiceName}}|{{.FuncName}}|{{.ServiceType}}|{{.EndpointServiceName}}|{{.EndpointStatusType}}|{{.EndpointStatusCode}}|{{.EndpointErrCode}}|{{.ResponseTime}}`
+	format := `{{.Date}}|{{.HostName}}|{{.SourceSystemID}}|{{.SessionID}}|{{.TrnsID}}|{{.SeqID}}||{{.Subrnumb}}|{{.RequestIP}}|{{.ServiceName}}|{{.FuncName}}|{{.ServiceType}}|{{.EndpointServiceName}}|{{.EndpointStatusType}}|{{.EndpointStatusCode}}|{{.EndpointErrCode}}|{{.ResponseTime}}`
 	hostname, _ := os.Hostname()
 	logTrns := logTrnsEndpointPattern{
 		Date:                "$date",
@@ -115,6 +115,7 @@ func NewEndpointTrnsLog(w io.Writer, sourceSystemID, sessionID, trnsID, requestI
 		SourceSystemID:      sourceSystemID,
 		SessionID:           sessionID,
 		TrnsID:              trnsID,
+		SeqID:               "$seqID",
 		Subrnumb:            "$subrnumb",
 		RequestIP:           requestIP,
 		ServiceName:         serviceName,
@@ -176,7 +177,7 @@ func (log Log) PrintTrns(subrnumb, statusType, errCode, errMsg, endpointErrCode,
 	log.Debug.Println(fmt.Sprintf(patternTrns))
 }
 
-func (log Log) PrintEndpointTrns(subrnumb, serviceType, endpointServiceName, endpointStatusType, endpointStatusCode, endpointErrCode, responseTime string) {
+func (log Log) PrintEndpointTrns(seqID, subrnumb, serviceType, endpointServiceName, endpointStatusType, endpointStatusCode, endpointErrCode, responseTime string) {
 	var patternTrns string
 	bangkok, err := time.LoadLocation("Asia/Bangkok")
 	dateNow := newTimeFmt(time.Now().In(bangkok), "2006-01-02T15:04:05")
@@ -186,6 +187,7 @@ func (log Log) PrintEndpointTrns(subrnumb, serviceType, endpointServiceName, end
 
 	r := strings.NewReplacer(
 		"$date", dateNow.String(),
+		"$seqID", seqID,
 		"$subrnumb", subrnumb,
 		"$ServiceType", serviceType,
 		"$EndpointServiceName", endpointServiceName,
