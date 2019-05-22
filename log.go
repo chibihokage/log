@@ -107,7 +107,7 @@ func NewTrnsLog(w io.Writer, sourceSystemID, sessionID, trnsID, requestIP, servi
 }
 
 func NewEndpointTrnsLog(w io.Writer, sourceSystemID, sessionID, trnsID, requestIP, serviceName, funcName string) Log {
-	format := `{{.Date}}|{{.HostName}}|{{.SourceSystemID}}|{{.SessionID}}|{{.TrnsID}}|{{.SeqID}}||{{.Subrnumb}}|{{.RequestIP}}|{{.ServiceName}}|{{.FuncName}}|{{.ServiceType}}|{{.EndpointServiceName}}|{{.EndpointStatusType}}|{{.EndpointStatusCode}}|{{.EndpointErrCode}}|{{.ResponseTime}}`
+	format := `{{.Date}}|{{.HostName}}|{{.SourceSystemID}}|{{.SessionID}}|{{.TrnsID}}|{{.SeqID}}|{{.Subrnumb}}|{{.RequestIP}}|{{.ServiceName}}|{{.FuncName}}|{{.ServiceType}}|{{.EndpointServiceName}}|{{.EndpointStatusType}}|{{.EndpointStatusCode}}|{{.EndpointErrCode}}|{{.ResponseTime}}`
 	hostname, _ := os.Hostname()
 	logTrns := logTrnsEndpointPattern{
 		Date:                "$date",

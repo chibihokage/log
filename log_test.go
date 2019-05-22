@@ -128,9 +128,9 @@ func TestPrintEndpointTrns(t *testing.T) {
 	endpointStatusCode := ""
 	endpointErrCode := "0"
 	responseTime := "234"
-	logtrns.PrintEndpointTrns(subrnumb, serviceType, endpointServiceName, endpointStatusType, endpointStatusCode, endpointErrCode, responseTime)
+	logtrns.PrintEndpointTrns("1", subrnumb, serviceType, endpointServiceName, endpointStatusType, endpointStatusCode, endpointErrCode, responseTime)
 	hostname, _ := os.Hostname()
-	expected := "|" + hostname + "|EVOUCHER|12345|1233244|66987654321|2313121|Test|TestFunc|REWARD|enquiryPrivilege|||0|234\n"
+	expected := "|" + hostname + "|EVOUCHER|12345|1233244|1|66987654321|2313121|Test|TestFunc|REWARD|enquiryPrivilege|||0|234\n"
 	if string(w.String()[19:]) != expected {
 		t.Errorf("Expected %#v \n        but got  %#v", expected, w.String()[19:])
 		t.Errorf("Expected %v but got %v", len(expected), len(w.String()[19:]))
